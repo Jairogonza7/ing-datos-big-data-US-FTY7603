@@ -23,14 +23,14 @@
         <value>1</value>
     </property>
 
-    <!-- Configuración del metastore con MySQL -->
+    <!-- Configuración del metastore con PostgreSQL -->
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
-        <value>jdbc:mysql://mysql:3306/metastore_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC</value>
+        <value>jdbc:postgresql://postgres:5432/metastore_db</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionDriverName</name>
-        <value>com.mysql.cj.jdbc.Driver</value>
+        <value>org.postgresql.Driver</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionUserName</name>

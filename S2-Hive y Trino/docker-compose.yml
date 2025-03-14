@@ -1,50 +1,48 @@
 version: '3.7'
 
 networks:
-  trino_network:
+  hive_network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.21.0.0/16
 
 volumes:
-  mysql-db:
+  postgres-db:
   warehouse:
 
 services:
-  # MySQL como metastore de Hive
-  mysql:
-    image: mysql:8.0
+  # PostgreSQL como Metastore de Hive
+  postgres:
+    image: postgres:15
     restart: unless-stopped
-    container_name: mysql
-    hostname: mysql
+    container_name: postgres
+    hostname: postgres
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: metastore_db
-      MYSQL_USER: hive
-      MYSQL_PASSWORD: password
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: metastore_db
     ports:
-      - '3306:3306'
+      - '5432:5432'
     volumes:
-      - mysql-db:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-db:/var/lib/postgresql/data
     networks:
-      trino_network:
+      hive_network:
         ipv4_address: 172.21.0.7
 
   # Metastore de Hive
   metastore:
     image: apache/hive:4.0.1
     depends_on:
-      - mysql
+      - postgres
     restart: unless-stopped
     container_name: metastore
     hostname: metastore
     environment:
-      DB_DRIVER: mysql
+      DB_DRIVER: postgres
       SERVICE_NAME: 'metastore'
-      SERVICE_OPTS: '-Xmx1G -Djavax.jdo.option.ConnectionDriverName=com.mysql.cj.jdbc.Driver
-                     -Djavax.jdo.option.ConnectionURL=jdbc:mysql://mysql:3306/metastore_db?useSSL=false
+      SERVICE_OPTS: '-Xmx1G -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+                     -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore_db
                      -Djavax.jdo.option.ConnectionUserName=hive
                      -Djavax.jdo.option.ConnectionPassword=password'
     ports:
@@ -52,9 +50,9 @@ services:
     volumes:
       - warehouse:/opt/hive/data/warehouse
       - ./hive/conf/hive-site.xml:/opt/hive/conf/hive-site.xml
-      - ./hive/conf/mysql-connector-j-8.0.33.jar:/opt/hive/lib/mysql.jar  # ⬅ Conector MySQL
+      - ./hive/conf/postgresql-42.3.8.jar:/opt/hive/lib/postgres.jar  # ⬅ Conector PostgreSQL
     networks:
-      trino_network:
+      hive_network:
         ipv4_address: 172.21.0.8
 
   # HiveServer2
@@ -66,7 +64,7 @@ services:
     container_name: hiveserver2
     hostname: hiveserver2
     environment:
-      DB_DRIVER: mysql
+      DB_DRIVER: postgres
       HIVE_SERVER2_THRIFT_PORT: 10000
       SERVICE_OPTS: '-Xmx1G -Dhive.metastore.uris=thrift://metastore:9083'
       SERVICE_NAME: 'hiveserver2'
@@ -76,32 +74,8 @@ services:
     volumes:
       - warehouse:/opt/hive/data/warehouse
       - ./hive/conf/hive-site.xml:/opt/hive/conf/hive-site.xml
-      - ./hive/conf/mysql-connector-j-8.0.33.jar:/opt/hive/lib/mysql.jar  # ⬅ Conector MySQL
-    command: ["/bin/bash", "-c", "chmod -R 777 /user/hive/data/warehouse && /opt/hive/bin/hive --service hiveserver2"]
+      - ./hive/conf/postgresql-42.3.8.jar:/opt/hive/lib/postgres.jar  # ⬅ Conector PostgreSQL
+    command: ["/bin/bash", "-c", "chmod -R 777 /opt/hive/data/warehouse && /opt/hive/bin/hive --service hiveserver2"]
     networks:
-      trino_network:
+      hive_network:
         ipv4_address: 172.21.0.9
-
-  # Trino
-  trino:
-    image: trinodb/trino:472
-    restart: unless-stopped
-    container_name: trino
-    hostname: trino
-    user: root
-    environment:
-      - TRINO_CONFIG_DIR=/etc/trino
-    volumes:
-      - ./trino/conf:/etc/trino
-      - ./trino/conf/catalog:/etc/trino/catalog  # <-- MONTA EL CONECTOR DE HIVE
-      - warehouse:/opt/hive/data/warehouse
-      - ./hive/conf/hive-site.xml:/etc/trino/hive-site.xml # <-- Copia hive-site.xml directamente
-
-    depends_on:
-      - hiveserver2
-    ports:
-      - '8080:8080'
-    
-    networks:
-      trino_network:
-        ipv4_address: 172.21.0.10
