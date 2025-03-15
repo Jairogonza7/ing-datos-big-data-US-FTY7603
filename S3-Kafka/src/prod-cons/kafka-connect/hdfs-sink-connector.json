@@ -1,0 +1,18 @@
+{
+    "name": "hdfs-sink-connector",
+    "config": {
+        "connector.class": "io.confluent.connect.hdfs.HdfsSinkConnector",
+        "tasks.max": "1",
+        "topics": "transactions",
+        "hdfs.url": "hdfs://namenode:9000",
+        "flush.size": "10",
+        "format.class": "io.confluent.connect.hdfs.json.JsonFormat",
+        "partitioner.class": "io.confluent.connect.storage.partitioner.DefaultPartitioner",
+        "topics.dir": "/topics",
+        "rotate.interval.ms": "60000",
+        "locale": "en",
+        "timezone": "UTC",
+        "value.converter.schemas.enable": "false",
+        "hdfs.authentication.kerberos": "false"
+    }
+}
