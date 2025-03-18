@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     krb5-user \
     libkrb5-dev \
     gcc \
-    hive \
     && rm -rf /var/lib/apt/lists/*
 
 # Cambiamos al usuario airflow para instalar paquetes de Airflow
@@ -22,5 +21,6 @@ RUN pip install --no-cache-dir "apache-airflow-providers-openlineage>=1.8.0"
 # Instalamos los providers necesarios para HDFS y Hive en Airflow
 RUN pip install --no-cache-dir apache-airflow-providers-apache-hdfs
 RUN pip install --no-cache-dir apache-airflow-providers-apache-hive
+RUN pip install --no-cache-dir apache-airflow-providers-apache-kafka
 
 

@@ -177,6 +177,7 @@ services:
       - warehouse:/opt/hive/data/warehouse
       - ./hive/conf/hive-site.xml:/opt/hive/conf/hive-site.xml
       - ./hive/conf/mysql-connector-j-8.0.33.jar:/opt/hive/lib/mysql.jar
+    command: ["/bin/bash", "-c", "chmod -R 777 /user/hive/data/warehouse && /opt/hive/bin/hive --service hiveserver2"]
     networks:
       - airflow_network
 
@@ -256,7 +257,7 @@ services:
     networks:
       - airflow_network
   
-  # apache/airflow:2.10.5-python3.9
+  # apache/airflow:2.9.3-python3.9
   airflow:
     build:
       context: .
@@ -277,6 +278,7 @@ services:
       airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true &&
       airflow connections add hdfs_default --conn-type webhdfs --conn-host namenode --conn-port 50070 --conn-extra '{\"proxy_user\": \"hdfs\"}' || true &&
       airflow connections add hive_default --conn-type hive --conn-host hiveserver2 --conn-port 10000 --conn-login hive --conn-password password || true &&
+      airflow connections add kafka_default --conn-type kafka --conn-host kafka --conn-port 9092 --conn-extra '{\"bootstrap.servers\": \"kafka:9092\", \"group.id\": \"airflow-consumer\"}' || true &&
       airflow scheduler & airflow webserver --port 8080"
     ports:
       - "8081:8080"  # UI de Airflow
