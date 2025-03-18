@@ -1,5 +1,5 @@
 # Partimos de la imagen base de Airflow
-FROM apache/airflow:2.10.5-python3.9
+FROM apache/airflow:2.9.3-python3.9
 
 # Usamos el usuario root para instalar dependencias del sistema
 USER root
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     krb5-user \
     libkrb5-dev \
     gcc \
+    hive \
     && rm -rf /var/lib/apt/lists/*
 
 # Cambiamos al usuario airflow para instalar paquetes de Airflow
@@ -19,16 +20,7 @@ USER airflow
 RUN pip install --no-cache-dir "apache-airflow-providers-openlineage>=1.8.0"
 
 # Instalamos los providers necesarios para HDFS y Hive en Airflow
-RUN pip install --no-cache-dir apache-airflow-providers-apache-webhdfs
+RUN pip install --no-cache-dir apache-airflow-providers-apache-hdfs
 RUN pip install --no-cache-dir apache-airflow-providers-apache-hive
 
-# Ejecutamos la inicialización de Airflow directamente en el Dockerfile
-RUN airflow db migrate && \
-    airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && \
-    airflow connections add hdfs_default  --conn-type webhdfs --conn-host namenode --conn-port 50070 --conn-extra '{\"proxy_user\": \"hdfs\"}' || true && \
-    airflow connections add hive_default --conn-type hive_cli --conn-host hive-server --conn-port 10000 || true
 
-RUN airflow scheduler
-
-# Arrancar el servidor web de Airflow
-CMD ["airflow", "webserver", "--port", "8080"]
