@@ -1,5 +1,5 @@
 # Partimos de la imagen base de Airflow
-FROM apache/airflow:2.10.5-python3.9
+FROM apache/airflow:2.9.3-python3.9
 
 # Usamos el usuario root para instalar dependencias del sistema
 USER root
@@ -18,5 +18,9 @@ USER airflow
 # Instalamos la versión correcta del provider de OpenLineage
 RUN pip install --no-cache-dir "apache-airflow-providers-openlineage>=1.8.0"
 
-# Instalamos el provider de HDFS para Airflow
+# Instalamos los providers necesarios para HDFS y Hive en Airflow
 RUN pip install --no-cache-dir apache-airflow-providers-apache-hdfs
+RUN pip install --no-cache-dir apache-airflow-providers-apache-hive
+RUN pip install --no-cache-dir apache-airflow-providers-apache-kafka
+
+

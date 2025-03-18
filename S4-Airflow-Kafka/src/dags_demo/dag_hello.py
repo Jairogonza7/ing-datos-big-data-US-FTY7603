@@ -8,7 +8,8 @@ default_args = {
     'retries': 1
 }
 
-dag = DAG('dag_basico', default_args=default_args, schedule_interval='@daily')
+dag = DAG('dag_hello', default_args=default_args, schedule_interval='@daily',
+    catchup=False)
 
 tarea = BashOperator(
     task_id='imprimir_mensaje',
